@@ -1,0 +1,42 @@
+<!DOCTYPE HTML>
+<html xmlns:th='http://www.thymeleaf.org'>
+<head>
+    <title>Library homepage</title>
+    <meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
+</head>
+<body>
+    <h1>Welcome on this library website!</h1>
+    <h2>View your rented books:</h2>
+    <form th:action='@{/search}' method='GET'>
+        <label>Title</label>
+        <input type='text' name='title' placeholder='Title'>
+
+        <input type='submit' value='search'>
+    </form>
+    <br>
+    <div style="border: solid 1px black; border-radius: 25px; padding: 8px; padding-left: 15px; margin-top: 10px; width: 30vw">
+        <h2 th:if="${#lists.isEmpty(books)}">You have no books rented out, click <a href="/rentBookPage">here</a> to rent out your first book!</h2>
+        <div th:if="!${#lists.isEmpty(books)}">
+            <h2>Your rented books</h2>
+            <table>
+                <thead>
+                <tr>
+                    <th>ISBN</th>
+                    <th>Title</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="book : ${books}">
+                    <td th:text="${book.getIsbn()}"></td>
+                    <td th:text="${book.getTitle()}"></td>
+                    <td><a th:href="@{/delete/{id}(id=${book.getId()})}">Stop renting this book</a></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <br>
+    <a href="/rentBookPage" style="padding: 10px; background-color: chartreuse; border-radius: 15px; margin-top: 30px; border: solid 1px black">Rent out a new book</a>
+</body>
+</html>
