@@ -1,8 +1,9 @@
-package edu.ap.aspringbasiclibraryoefening;
+package edu.ap.aspringbasiclibraryoefening.controller;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 
+import edu.ap.aspringbasiclibraryoefening.aop.Interceptable;
 import edu.ap.aspringbasiclibraryoefening.jpa.Book;
 import edu.ap.aspringbasiclibraryoefening.jpa.BookRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,8 +25,17 @@ public class LibraryController {
         return "redirect:/home";
     }
     @RequestMapping("/home")
+    @Interceptable
     public String getHomepage(Model model){
         model.addAttribute("books", repository.findAll());
+        model.addAttribute("maxbooks", false);
+        return "home";
+    }
+
+    @RequestMapping("/homemax")
+    public String getHomepageMax(Model model){
+        model.addAttribute("books", repository.findAll());
+        model.addAttribute("maxbooks", true);
         return "home";
     }
 
@@ -44,12 +54,13 @@ public class LibraryController {
     }
 
     @RequestMapping("/rentBookPage")
+    @Interceptable
     public String getRentBook(){
         return "rentBook";
     }
 
     @PostMapping("/rentBook")
-    public String add(@RequestParam("isbn") String isbn, @RequestParam("title") String title) {
+    public String addBook(@RequestParam("isbn") String isbn, @RequestParam("title") String title) {
         isbn = isbn.trim();
         title = title.trim();
         try {
