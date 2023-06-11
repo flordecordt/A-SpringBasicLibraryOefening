@@ -1,78 +1,118 @@
 package edu.ap.aspringbasiclibraryoefening.controller;
 
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletResponse;
-
 import edu.ap.aspringbasiclibraryoefening.aop.Interceptable;
-import edu.ap.aspringbasiclibraryoefening.jpa.Book;
-import edu.ap.aspringbasiclibraryoefening.jpa.BookRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 @Controller
 @Scope("session")
 public class LibraryController {
     @Autowired
-    private BookRepository repository;
+    private edu.ap.aspringbasiclibraryoefening.redis.RedisService service;
 
-    @RequestMapping("/")
+    @GetMapping ("/")
     public String RedirectHome(Model model){
         return "redirect:/home";
     }
-    @RequestMapping("/home")
+    @GetMapping ("/flush")
+    public String flushDB(){
+        service.flushDb();
+        return "redirect:/home";
+    }
+    @GetMapping("/home")
     @Interceptable
     public String getHomepage(Model model){
-        model.addAttribute("books", repository.findAll());
+        List<Book> bookList = new ArrayList<>();
+
+        Set<String> books = service.keys("books:*");
+
+        for (String m : books){
+            List<String> authors = service.getList(m);
+            String[] parts = m.split(":");
+
+            String strAuthors = "";
+
+            for(String a : authors){
+                strAuthors += a + ", ";
+            }
+            strAuthors = strAuthors.substring(0, strAuthors.length() - 2);
+
+            Book book = new Book(parts[1], parts[2], strAuthors);
+            bookList.add(book);
+        }
+
+        model.addAttribute("books", bookList);
         model.addAttribute("maxbooks", false);
         return "home";
     }
 
-    @RequestMapping("/homemax")
+    @GetMapping("/homemax")
     public String getHomepageMax(Model model){
-        model.addAttribute("books", repository.findAll());
+        List<Book> bookList = new ArrayList<>();
+
+        Set<String> books = service.keys("books:*");
+
+        for (String m : books){
+            List<String> authors = service.getList(m);
+            String[] parts = m.split(":");
+
+            String strAuthors = "";
+
+            for(String a : authors){
+                strAuthors += a + ", ";
+            }
+            strAuthors = strAuthors.substring(0, strAuthors.length() - 2);
+
+            Book book = new Book(parts[1], parts[2], strAuthors);
+            bookList.add(book);
+        }
+
+        model.addAttribute("books", bookList);
         model.addAttribute("maxbooks", true);
         return "home";
     }
 
-    @GetMapping("/delete/{id}")
-    public String deleteUser(@PathVariable("id") long id, Model model) {
-        Book book = repository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid user Id:" + id));
-        repository.delete(book);
-        return "redirect:/home";
-    }
-
-    @GetMapping("/search")
-    public String searchBook(@RequestParam("title") String title, Model model) {
-        model.addAttribute("books", repository.findBooksByTitleContains(title.trim()));
-        return "home";
-    }
-
-    @RequestMapping("/rentBookPage")
+    @GetMapping("/rentBookPage")
     @Interceptable
     public String getRentBook(){
         return "rentBook";
     }
 
     @PostMapping("/rentBook")
-    public String addBook(@RequestParam("isbn") String isbn, @RequestParam("title") String title) {
-        isbn = isbn.trim();
-        title = title.trim();
-        try {
-            // save the new person
-            Book newBook = new Book(isbn, title);
-            this.repository.save(newBook);
-        } catch (Exception ex) {
-            System.out.println(ex.getMessage());
+    public String addBook(@RequestParam("isbn") String isbn,
+                          @RequestParam("title") String title,
+                          @RequestParam("authors") String authors) {
+        //genereer de sleutel op basis van isbn, title
+        String key = "books:" + isbn + ":" + title;
+
+        //De authors splitsen op basis van komma's
+        String[] authorSplit = authors.split(",");
+
+        //elke author toevoegen aan de redis lijst
+        for (String author : authorSplit) {
+            this.service.rpush(key, author);
         }
+        // Verhoog het totale aantal films met 1
+        this.service.incr("bookscount");
 
         return "redirect:/home";
     }
+
+    @GetMapping ("/delete/{key}")
+    public String deleteKey(@PathVariable("key") String key) {
+        service.deleteKey(key);
+        this.service.decr("bookscount");
+        return "redirect:/home";
+    }
+
+
 
 
 
