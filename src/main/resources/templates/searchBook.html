@@ -1,0 +1,15 @@
+<!DOCTYPE HTML>
+<html xmlns:th='http://www.thymeleaf.org'>
+<head>
+    <title>Library homepage</title>
+    <meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
+</head>
+<body>
+<h1>Search for a new book!</h1>
+<form th:action='@{/search}' method='POST'>
+    <label>title</label>
+    <input type='text' name='title' placeholder='Title'>
+    <input type='submit' value='Search for this book!'>
+</form>
+</body>
+</html>
