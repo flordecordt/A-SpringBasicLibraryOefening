@@ -18,6 +18,8 @@ public class WebSecurityConfig {
                 .permitAll()
                 .antMatchers("/")
                 .permitAll()
+                .antMatchers("/search")
+                .permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .formLogin()
